@@ -1,0 +1,91 @@
+---
+author: Rob Quigley
+date: '`r format(Sys.Date())`'
+title: Data Scraping Outline
+subtitle: Drag Race
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Discuss why I'm doing this
+
+-   Data Science is fun, but I did not have an online presence and thought this would be a good start
+
+-   Sometimes the data extraction piece is overlooked- want to give a nice overview of my SQL SQL SQL SQL SQL love
+
+    -   Scrape things, get them cleaned up and keep them in some type of persistent storage space
+
+    -   You have to be your own advocate in sniffing out data
+
+        -   Also, trust no bitch, myself included, because if the ETL process isn't laid out you could just be using crap data and wasting your time
+
+        -   If you know how to get data, you'll have more authority when discussing your results
+
+-   Small piece on LGBTQ representation in data science.... if I have to read one more sports related thing LOL also try to find some writings by Hadley to spruce it up
+
+# Data Scraping
+
+1.  Give a shout out to the dragracer package and how it encouraged me to build my own where I controlled the data coming in... i.e. getting viewership and stuff for the current season
+
+2.  rvest and map -- focus on the Wikipedia scraping since the family connections is going to be addressed in a separate article
+
+    1.  cite the initial youtube video with art history and show how that was my initial learning
+
+        1.  use it to show where to look
+
+        2.  How I decided to use wikipedia
+
+        3.  why map_df was cleaner than looping, especially since we could see the structure of the tables from the website
+
+# Data Cleaning 
+
+1.  Short overview of the regex used to remove easily identified patterns on the wikipedia page
+
+2.  Lay groundwork for using the example database
+
+    1.  Came up with a plan for naming conventions
+
+    2.  How did I want dates to be formatted
+
+    3.  Why did I scale things before anlysis
+
+# Data Loading 
+
+1.  Show how to create an in project data base
+
+    1.  Great for proof of concept- especially if the typical data science workflow it to get your data from some DBMS. THIS ACTAULLY FOLLOWS A TYPICAL DATA SCIENCE WORKFLOW
+
+    2.  Even better for those that are super comfortable with SQL and new to R
+
+    3.  HERE IS WHERE I MENTION THAT THE DS PLATFORM MIGHT CHANGE BUT SQL WILL PRETTY MUCH BE NEEDED ALL THE TIME AND PORTABILITY
+
+2.  Example function for executing simple SQL scripts
+
+3.  Small discussion on tables/views and why I named things the way that I did
+
+# Basic Statistics 
+
+1.  Link to the equissee library and how this was an important tool for EDA
+
+    1.  Give the example of the factor issue
+
+2.  Example Hypothesis- Viewership/ratings are different between seasons
+
+    1.  indicating there are "good" and "bad" seasons... which are completely subjective and will just be used for directional purposes
+
+3.  How I did the modeling and why MAP has been so useful
+
+4.  Basic results and presentation
+
+    1.  Only use a few 'fancy' visuals.
+
+# Next Steps and Improvements 
+
+1.  Gather more data to build advanced models, IDK something something machine learning?
+
+2.  Turning this project into a package
+
+3.  Write another article on functional programming and the basics of my coding paradigm
