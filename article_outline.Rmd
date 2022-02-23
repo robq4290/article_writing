@@ -40,7 +40,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
         3.  why map_df was cleaner than looping, especially since we could see the structure of the tables from the website
 
-# Data Cleaning 
+# Data Cleaning
 
 1.  Short overview of the regex used to remove easily identified patterns on the wikipedia page
 
@@ -52,7 +52,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
     3.  Why did I scale things before anlysis
 
-# Data Loading 
+# Data Loading
 
 1.  Show how to create an in project data base
 
@@ -66,7 +66,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 3.  Small discussion on tables/views and why I named things the way that I did
 
-# Basic Statistics 
+# Basic Statistics
 
 1.  Link to the equissee library and how this was an important tool for EDA
 
@@ -82,7 +82,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
     1.  Only use a few 'fancy' visuals.
 
-# Next Steps and Improvements 
+# Next Steps and Improvements
 
 1.  Gather more data to build advanced models, IDK something something machine learning?
 
