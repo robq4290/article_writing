@@ -1,0 +1,177 @@
+---
+title: "Tutorial"
+output: 
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(learnr)
+library(tidyverse)
+library(DBI)
+library(rvest)
+library(janitor)
+library(here)
+library(glue)
+library(esquisse)
+library(performance)
+library(plotly)
+```
+
+# Drag Race
+
+One Friday night I was enjoying my favorite ritual, watching the latest episode of RuPaul's Drag Race and enjoying a bubbly beverage with some friends.
+
+![](https://i.pinimg.com/originals/9f/93/0f/9f930fc91e3f87d640f842ae6e0dde00.gif)
+
+Someone suggested the current season wasn't "as good as" one of its predecessors. Well, let me tell you.... that got my data science brain going. First thought, how can they make this bold statement without data?
+
+![](https://64.media.tumblr.com/97c859fda24580750ba32e59e0cf5ef2/tumblr_inline_p7fxplJCk91qz7j5g_250.gifv){width="252"}
+
+Now, let me be very clear- each season the queens BRING IT and dazzle us with their talent. This is not a commentary on the Queen's, rather the production and marketing of a season.
+
+I'm a Data Scientist who used to build databases in a past life as a Data Engineer, and knew I could find it on the internet, [Wiki Rule of the internet](https://tvtropes.org/pmwiki/pmwiki.php/Main/TheWikiRule), and build a pipeline to collect it.
+
+With no intention of submitting this to an academic article... off to Wikipedia I went! Sorry, every educator I've ever had. I've been watching the competition for a while and had a hunch that the seasons that aired on VH1, season 9 - current, would be my best bet. Lucky for me, this was true. Each of the pages had a table containing the Neilson rating and viewer count, in millions, for each episode.
+
+I had two options:
+
+1.  Use the [datapasta library](https://github.com/MilesMcBain/datapasta) to paste the 6 tables into a tribble and bind them together
+
+2.  Scrape each page for this table
+
+    -   The only difference in the URLs was the season number
+
+I'm lazy, and knew I would get sick and tired of copy paste, no shade to datapasta! The following sections of this document will walk you through 4 main points:
+
+1.  How to scrape a table from Wikipedia (**Extract**)
+
+2.  Simple data cleaning and restructuring (**Transform**)
+
+3.  Quick way to store things in a central location (Load)
+
+4.  Use the results from steps 1-3 to answer the question, "Is there a difference in the average rating of a season?
+
+## Extract
+
+### Wiki.tables
+
+Without going in depth, there are html objects called wikitables that we can scrape from Wikipedia using some function from the rvest package.
+
+Since I knew some of the table properties, like the column names, it was relatively simple to get what I needed. Below is the final output, but I think we should go through each step of the process to get an idea of what the intermediate objects look like.
+
+Run the code to see the desired output:
+
+```{r get_the_table_from_one_page, exercise=TRUE, exercise.lines=40}
+
+season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+  mutate(
+          all_tables=  map(wiki_url, 
+                             ~ { 
+                                 # .x is the dataframe piped in 
+                                 # and for each row of the frame the 
+                                 # chain of functions is executed 
+                                 # a cleaner way of getthing things 
+                                 # than going down the loop route
+                                 .x %>% 
+                                   read_html(wiki_url) %>% 
+                                   html_nodes("table.wikitable") %>% 
+                                   html_table(header=TRUE)  
+                                }
+                            )
+        ) %>% 
+  unnest(all_tables) %>% 
+  mutate(table_column_names=map(all_tables,
+                                  ~{.x %>% 
+                                      names()
+                                    }
+                                )
+    
+  ) %>% 
+  filter(str_detect(table_column_names,"View")
+         ) %>% 
+  select(all_tables) %>% 
+  unnest(all_tables)
+
+season_9_df
+```
+
+1.  First things first, I need to create a dataframe containing a url column ( this is important for step 2)
+
+```{r look_at_url_tribble, exercise=TRUE}
+season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")
+season_9_df
+```
+
+Simple enough! Now, something that seems scary but is actually really cool. When I first started this project I was writing loops to get the data, they worked but the code was ugly and kind of hard to follow. I decided it was time to learn how to use map functions. I've been putting it off for a while and knew this was the best time to learn.
+
+In short, map takes in columns of a data frame as inputs and then does something. In most cases, that something is applying a function:
+
+map(this_thing, function(this_thing))
+
+I like to think of map like using a row wise transformation in SQL:
+
+``` sql
+SELECT 
+    column_1
+  , abs(column_1) AS column_1_transformed 
+FROM example_table
+```
+
+2.  Next, we need to collect all of the tables that are on the page.
+
+```{r nested_map_output,exercise=TRUE}
+season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+  mutate(
+          all_tables=  map(wiki_url, 
+                             ~ { 
+                                 # .x is the dataframe piped in 
+                                 # and for each row of the frame the 
+                                 # chain of functions is executed 
+                                 # a cleaner way of getthing things 
+                                 # than going down the loop route
+                                 .x %>% 
+                                   read_html(wiki_url) %>% 
+                                   html_nodes("table.wikitable") %>% 
+                                   html_table(header=TRUE)  
+                                }
+                            )
+        )  
+```
+
+The sequence of the chain says:
+
+1.  Create a new column called all_tables
+2.  Go to the wiki_url
+3.  Read the underlying html source code for the wiki_url
+4.  Find everything that is labeled as "table.wikitable"
+5.  Keep the column names
+
+It returns a list with 7 elements, just as expected, that needs to be unnested as tibbles so we can perform some operations on them; all that means is that we want to have a row for each element
+
+```{r unnested_map_output,exercise=TRUE}
+season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+  mutate(
+          all_tables=  map(wiki_url, 
+                             ~ { 
+                                 # .x is the dataframe piped in 
+                                 # and for each row of the frame the 
+                                 # chain of functions is executed 
+                                 # a cleaner way of getthing things 
+                                 # than going down the loop route
+                                 .x %>% 
+                                   read_html(wiki_url) %>% 
+                                   html_nodes("table.wikitable") %>% 
+                                   html_table(header=TRUE)  
+                                }
+                            )
+        ) %>% 
+  unnest(all_tables)
+season_9_df
+```
+
+3.  Get the column names for each tribble
+
+We'll be using map again, because we need to use names()
