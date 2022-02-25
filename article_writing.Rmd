@@ -20,7 +20,7 @@ library(performance)
 library(plotly)
 ```
 
-# Drag Race
+## Drag Race
 
 One Friday night I was enjoying my favorite ritual, watching the latest episode of RuPaul's Drag Race and enjoying a bubbly beverage with some friends.
 
@@ -64,7 +64,7 @@ Since I knew some of the table properties, like the column names, it was relativ
 
 Run the code to see the desired output:
 
-```{r get_the_table_from_one_page, exercise=TRUE, exercise.lines=40}
+```{r get_the_table_from_one_page, exercise=FALSE}
 
 season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
   mutate(
@@ -98,11 +98,13 @@ season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_
 season_9_df
 ```
 
-1.  First things first, I need to create a dataframe containing a url column ( this is important for step 2)
+### Tribble set up  
+
+#### First things first, we need to create a dataframe containing a url column ( this is important for step 2)
 
 ```{r look_at_url_tribble, exercise=TRUE}
-season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")
-season_9_df
+tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")
+
 ```
 
 Simple enough! Now, something that seems scary but is actually really cool. When I first started this project I was writing loops to get the data, they worked but the code was ugly and kind of hard to follow. I decided it was time to learn how to use map functions. I've been putting it off for a while and knew this was the best time to learn.
@@ -120,10 +122,10 @@ SELECT
 FROM example_table
 ```
 
-2.  Next, we need to collect all of the tables that are on the page.
+### Collect all of the tables that are on the page.
 
 ```{r nested_map_output,exercise=TRUE}
-season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
   mutate(
           all_tables=  map(wiki_url, 
                              ~ { 
@@ -152,7 +154,7 @@ The sequence of the chain says:
 It returns a list with 7 elements, just as expected, that needs to be unnested as tibbles so we can perform some operations on them; all that means is that we want to have a row for each element
 
 ```{r unnested_map_output,exercise=TRUE}
-season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
   mutate(
           all_tables=  map(wiki_url, 
                              ~ { 
@@ -168,10 +170,75 @@ season_9_df <- tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_
                                 }
                             )
         ) %>% 
-  unnest(all_tables)
-season_9_df
+  unnest(all_tables) 
 ```
 
-3.  Get the column names for each tribble
+### Use column names to filter down to desired table
 
-We'll be using map again, because we need to use names()
+We'll be using map again, because we need to apply names() to each tibble (row) in our dataframe.
+
+```{r unnested_map_output_col_names,exercise=TRUE}
+tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+  mutate(
+          all_tables=  map(wiki_url, 
+                             ~ { 
+                                 # .x is the dataframe piped in 
+                                 # and for each row of the frame the 
+                                 # chain of functions is executed 
+                                 # a cleaner way of getthing things 
+                                 # than going down the loop route
+                                 .x %>% 
+                                   read_html(wiki_url) %>% 
+                                   html_nodes("table.wikitable") %>% 
+                                   html_table(header=TRUE)  
+                                }
+                            )
+        ) %>% 
+  unnest(all_tables) %>% 
+  mutate(table_column_names=map(all_tables,
+                                  ~{.x %>% 
+                                      names()
+                                    }
+                                )
+    
+  ) %>% 
+  filter(str_detect(table_column_names,"View")
+         ) 
+
+```
+
+#### Unnest() the dataframe to use in the environment 
+
+```{r final_wikitable_output,exercise=TRUE }
+tribble(~wiki_url,"https://en.wikipedia.org/wiki/RuPaul%27s_Drag_Race_(season_9)")%>%
+  mutate(
+          all_tables=  map(wiki_url, 
+                             ~ { 
+                                 # .x is the dataframe piped in 
+                                 # and for each row of the frame the 
+                                 # chain of functions is executed 
+                                 # a cleaner way of getthing things 
+                                 # than going down the loop route
+                                 .x %>% 
+                                   read_html(wiki_url) %>% 
+                                   html_nodes("table.wikitable") %>% 
+                                   html_table(header=TRUE)  
+                                }
+                            )
+        ) %>% 
+  unnest(all_tables) %>% 
+  mutate(table_column_names=map(all_tables,
+                                  ~{.x %>% 
+                                      names()
+                                    }
+                                )
+    
+  ) %>% 
+  filter(str_detect(table_column_names,"View")
+         ) %>% 
+  select(all_tables) %>% 
+  unnest(all_tables)
+
+```
+
+## Transform 
